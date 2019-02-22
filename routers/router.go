@@ -50,7 +50,7 @@ func login(c *gin.Context) {
 	resLogin := u.Verlogin()
 	if resLogin != nil {
 		c.HTML(200, "login.html", gin.H{
-			"title": "注册",
+			"title": "登录",
 			"msg":   fmt.Sprintf("%s", resLogin),
 		})
 

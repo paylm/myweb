@@ -29,8 +29,10 @@ func (u *UserData) Verlogin() error {
 
 	pwd, err := gredis.Get(u.Username)
 	if err != nil {
-		return err
+		fmt.Printf("Verlogin with err:%v\n", err)
+		return errors.New("帐号不存在")
 	}
+
 	strPwd := string(pwd)
 	if u.Password != strPwd {
 		fmt.Printf("pwd:%s,post pwd:%s\n", strPwd, u.Password)
