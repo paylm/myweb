@@ -110,8 +110,8 @@ func LikeDeletes(key string) error {
 	return nil
 }
 
-func Exec(cmd string, data interface{}) ([]string, error) {
+func Exec(cmd string, data ...interface{}) (interface{}, error) {
 	conn := RedisConn.Get()
 	defer conn.Close()
-	return redis.Strings(conn.Do(cmd, data))
+	return conn.Do(cmd, data...)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/paylm/myweb/pkg/gmysql"
 	"github.com/paylm/myweb/pkg/gredis"
 	"github.com/paylm/myweb/pkg/setting"
 	"github.com/paylm/myweb/routers"
@@ -11,7 +12,16 @@ import (
 
 func main() {
 	setting.Setup()
-	gredis.Setup()
+	err := gredis.Setup()
+	if err != nil {
+		fmt.Printf("connect redis with err:%v", err)
+		return
+	}
+	err = gmysql.Setup()
+	if err != nil {
+		fmt.Printf("connect mysql with err:%v", err)
+		return
+	}
 
 	routersInit := routers.InitRouter()
 	readTimeout := setting.ServerSetting.ReadTimeout
@@ -26,7 +36,7 @@ func main() {
 		WriteTimeout:   writeTimeout,
 		MaxHeaderBytes: maxHeaderBytes,
 	}
-	fmt.Printf("listen at %s , HttpPort : %s", endPoint, setting.ServerSetting.HttpPort)
+	fmt.Printf("listen at %s , HttpPort : %v", endPoint, setting.ServerSetting.HttpPort)
 	fmt.Println(setting.RedisSetting)
 	server.ListenAndServe()
 	return

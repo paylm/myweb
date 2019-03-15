@@ -84,7 +84,7 @@ func Setup() {
 
 func mapTo(section string, v interface{}) {
 	//fmt.Println("mapto", section, cfg.Section(section).KeyStrings())
-	fmt.Println("mapto", section, cfg.Section(section).KeysHash())
+	//fmt.Println("mapto", section, cfg.Section(section).KeysHash())
 	err := cfg.Section(section).MapTo(v)
 	if err != nil {
 		log.Fatalf("Cfg.MapTo RedisSetting err: %v", err)
