@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/paylm/myweb/models/user"
-	"github.com/paylm/myweb/pkg/gredis"
 	"github.com/paylm/myweb/pkg/setting"
 )
 
@@ -32,8 +31,12 @@ func getb(c *gin.Context) {
 
 func index(c *gin.Context) {
 	//c.String(200, `index`)
+	online := user.OnlineCount()
+	pjs := user.GetProjects()
 	c.HTML(200, "index.html", gin.H{
-		"title": "index",
+		"title":  "index",
+		"online": online,
+		"pjs":    pjs,
 	})
 }
 
@@ -43,11 +46,7 @@ func login(c *gin.Context) {
 	if c.Bind(&u) != nil {
 		fmt.Printf("login bind error :%v\n", err)
 	}
-	err = gredis.Set(fmt.Sprintf("login:%s", u.Username), 1, 3600)
-	if err != nil {
-		fmt.Printf("login redis err:%v\n", err)
-	}
-	resLogin := u.Verlogin()
+	u, resLogin := u.Verlogin()
 	if resLogin != nil {
 		c.HTML(200, "login.html", gin.H{
 			"title": "登录",
@@ -62,6 +61,7 @@ func login(c *gin.Context) {
 		Path:     "/",
 		HttpOnly: true,
 	}
+	fmt.Printf("%v login ok\n", u)
 	http.SetCookie(c.Writer, cookie)
 	c.String(http.StatusOK, "Login successful")
 }
@@ -99,9 +99,11 @@ func loginPage(c *gin.Context) {
 }
 
 func tables(c *gin.Context) {
+	users := user.GetAllUser(100)
 	c.HTML(200, "tables.html", gin.H{
 		"title": "ppl table",
 		"msg":   "",
+		"users": users,
 	})
 }
 func charts(c *gin.Context) {
