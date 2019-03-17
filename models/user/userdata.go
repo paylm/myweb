@@ -29,11 +29,13 @@ type UserData struct {
 	Username string `form:"username" json:"username"`
 	Password string `form:"password" json:"password"`
 	Email    string `form:"email" json:"email"`
+	Job      string `form:"job"`
+	Stat     int    `form:"stat" json:"stat"`
 	//UserInfo
 }
 
 func (UserData) TableName() string {
-	return "userdata"
+	return "user"
 }
 
 func (u *UserData) Verlogin() (UserData, error) {
@@ -47,6 +49,10 @@ func (u *UserData) Verlogin() (UserData, error) {
 	if &u2 == nil {
 		fmt.Printf("Verlogin with err:%v\n", err)
 		return u2, errors.New("帐号不存在")
+	}
+
+	if u2.Stat < 0 {
+		return u2, errors.New("此帐号已被禁用")
 	}
 
 	strPwd := string(u2.Password)
@@ -69,6 +75,7 @@ func (u *UserData) Reg() error {
 		return err
 	}
 	gredis.Set(u.Username, u.Password, 3600)
+	gredis.Exec("SETBIT", ONLINE_KEY, u.Id, 1)
 	fmt.Printf("reg save:%v\n", u)
 	return err
 }

@@ -3,7 +3,9 @@ package routers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/paylm/myweb/models/user"
 	"github.com/paylm/myweb/pkg/setting"
@@ -17,6 +19,17 @@ type blog struct {
 	title   string
 	content string
 	pubtime string
+}
+
+func loadUserInfo(c *gin.Context) interface{} {
+
+	session := sessions.Default(c)
+	u := session.Get("user")
+	fmt.Printf("loadUserInfo u:%v\n", u)
+	if u == nil {
+		return user.UserData{Username: "anon", Job: "vister", Email: ""}
+	}
+	return u
 }
 
 func getb(c *gin.Context) {
@@ -33,10 +46,13 @@ func index(c *gin.Context) {
 	//c.String(200, `index`)
 	online := user.OnlineCount()
 	pjs := user.GetProjects()
+	u := loadUserInfo(c)
+	fmt.Printf("userinfo:%v\n", u)
 	c.HTML(200, "index.html", gin.H{
 		"title":  "index",
 		"online": online,
 		"pjs":    pjs,
+		"user":   u,
 	})
 }
 
@@ -55,15 +71,13 @@ func login(c *gin.Context) {
 
 		return
 	}
-	cookie := &http.Cookie{
-		Name:     "session_id",
-		Value:    "123",
-		Path:     "/",
-		HttpOnly: true,
-	}
 	fmt.Printf("%v login ok\n", u)
-	http.SetCookie(c.Writer, cookie)
-	c.String(http.StatusOK, "Login successful")
+	//set session
+	session := sessions.Default(c)
+	session.Set("user", u)
+	session.Save()
+	//c.String(http.StatusOK, "Login successful")
+	c.Redirect(http.StatusMovedPermanently, "/")
 }
 
 func register(c *gin.Context) {
@@ -143,6 +157,15 @@ func foo(c *gin.Context) {
 
 func InitRouter() *gin.Engine {
 	r := gin.New()
+
+	//init session
+	store := sessions.NewCookieStore([]byte("secret"))
+	store.Options(sessions.Options{
+		MaxAge: int(30 * time.Minute), //30min
+		Path:   "/",
+	})
+
+	r.Use(sessions.Sessions("mysession", store))
 
 	r.Use(gin.Recovery())
 	r.Static("/static", "./template")
