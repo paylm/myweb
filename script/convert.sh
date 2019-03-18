@@ -15,6 +15,9 @@ libreoffice --headless --convert-to temp.pdf ${filename}
 
 echo "convert to pdf ok , going to convert jpg"
 
+rm -rm output/*
+mkdir output
+
 convert -density ${size} temp.pdf  output/out%d.jpg
 
 echo "convert to jpg done, "
