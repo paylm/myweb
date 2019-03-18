@@ -104,6 +104,7 @@ func GetAllUser(limit int) []UserData {
 	return users
 }
 
-func (u *UserData) Logout() {
-	gredis.Exec("SETBIT", "online", u.Id, 0)
+func Logout(id int) {
+	fmt.Printf("logout u:%d\n", id)
+	gredis.Exec("SETBIT", "online", id, 0)
 }

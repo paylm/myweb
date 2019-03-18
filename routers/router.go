@@ -3,7 +3,6 @@ package routers
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -25,6 +24,7 @@ func loadUserInfo(c *gin.Context) interface{} {
 
 	session := sessions.Default(c)
 	u := session.Get("user")
+	fmt.Printf("loadUserInfo uid:%v\n", session.Get("userId"))
 	fmt.Printf("loadUserInfo u:%v\n", u)
 	if u == nil {
 		return user.UserData{Username: "anon", Job: "vister", Email: ""}
@@ -74,7 +74,8 @@ func login(c *gin.Context) {
 	fmt.Printf("%v login ok\n", u)
 	//set session
 	session := sessions.Default(c)
-	session.Set("user", u)
+	session.Set("userId", u.Id)
+	//session.Set("user", u)
 	session.Save()
 	//c.String(http.StatusOK, "Login successful")
 	c.Redirect(http.StatusMovedPermanently, "/")
@@ -128,10 +129,16 @@ func charts(c *gin.Context) {
 }
 
 func logout(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"code":   200,
-		"result": "logout ok",
-	})
+	session := sessions.Default(c)
+	uid := session.Get("userId")
+	user.Logout(uid.(int))
+	session.Delete("userId")
+	session.Save()
+	//	c.JSON(200, gin.H{
+	//		"code":   200,
+	//		"result": "logout ok",
+	//	})
+	c.Redirect(http.StatusMovedPermanently, "/login")
 }
 
 func blist(c *gin.Context) {
@@ -159,12 +166,13 @@ func InitRouter() *gin.Engine {
 	r := gin.New()
 
 	//init session
-	store := sessions.NewCookieStore([]byte("secret"))
-	store.Options(sessions.Options{
-		MaxAge: int(30 * time.Minute), //30min
-		Path:   "/",
-	})
+	//store := sessions.NewCookieStore([]byte("secret"))
+	//	store.Options(sessions.Options{
+	//		MaxAge: int(30 * time.Minute), //30min
+	//		Path:   "/",
+	//	})
 
+	store, _ := sessions.NewRedisStore(10, "tcp", setting.RedisSetting.Host, setting.RedisSetting.Password, []byte("secret"))
 	r.Use(sessions.Sessions("mysession", store))
 
 	r.Use(gin.Recovery())
