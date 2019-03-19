@@ -1,8 +1,10 @@
 package routers
 
 import (
+	"encoding/gob"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -27,7 +29,7 @@ func loadUserInfo(c *gin.Context) interface{} {
 	fmt.Printf("loadUserInfo uid:%v\n", session.Get("userId"))
 	fmt.Printf("loadUserInfo u:%v\n", u)
 	if u == nil {
-		return user.UserData{Username: "anon", Job: "vister", Email: ""}
+		return user.UserData{Username: "anon", Job: "vister", Img: "avatar-1.jpg", Email: ""}
 	}
 	return u
 }
@@ -75,10 +77,10 @@ func login(c *gin.Context) {
 	//set session
 	session := sessions.Default(c)
 	session.Set("userId", u.Id)
-	//session.Set("user", u)
+	session.Set("user", u)
 	session.Save()
 	//c.String(http.StatusOK, "Login successful")
-	c.Redirect(http.StatusMovedPermanently, "/")
+	c.Redirect(http.StatusFound, "/")
 }
 
 func register(c *gin.Context) {
@@ -93,7 +95,7 @@ func register(c *gin.Context) {
 	var u user.UserData
 	if c.Bind(&u) == nil {
 		if err := u.Reg(); err == nil {
-			c.Redirect(http.StatusMovedPermanently, "/")
+			c.Redirect(http.StatusFound, "/")
 		} else {
 			c.HTML(200, "register.html", gin.H{
 				"title": "注册",
@@ -115,30 +117,40 @@ func loginPage(c *gin.Context) {
 
 func tables(c *gin.Context) {
 	users := user.GetAllUser(100)
+	u := loadUserInfo(c)
 	c.HTML(200, "tables.html", gin.H{
 		"title": "ppl table",
 		"msg":   "",
 		"users": users,
+		"user":  u,
 	})
 }
 func charts(c *gin.Context) {
+	u := loadUserInfo(c)
 	c.HTML(200, "charts.html", gin.H{
 		"title": "ppl charts",
 		"msg":   "",
+		"user":  u,
 	})
 }
 
 func logout(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("userId")
+	//fmt.Printf("logout uid:%v\n", uid)
+	if uid == nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
 	user.Logout(uid.(int))
 	session.Delete("userId")
+	session.Delete("user")
 	session.Save()
 	//	c.JSON(200, gin.H{
 	//		"code":   200,
 	//		"result": "logout ok",
 	//	})
-	c.Redirect(http.StatusMovedPermanently, "/login")
+	c.Redirect(http.StatusFound, "/login")
 }
 
 func blist(c *gin.Context) {
@@ -167,12 +179,16 @@ func InitRouter() *gin.Engine {
 
 	//init session
 	//store := sessions.NewCookieStore([]byte("secret"))
-	//	store.Options(sessions.Options{
-	//		MaxAge: int(30 * time.Minute), //30min
-	//		Path:   "/",
-	//	})
-
+	//http://127.0.0.1:6060/pkg/github.com/gorilla/sessions/
+	//As it's not possible to pass a raw type as a parameter to a function, gob.Register() relies on us passing it a value of the desired type
+	gob.Register(&user.UserData{})
+	//gob.Register(&{})
 	store, _ := sessions.NewRedisStore(10, "tcp", setting.RedisSetting.Host, setting.RedisSetting.Password, []byte("secret"))
+	store.Options(sessions.Options{
+		MaxAge: int(30 * time.Minute), //30min
+		Path:   "/",
+	})
+
 	r.Use(sessions.Sessions("mysession", store))
 
 	r.Use(gin.Recovery())

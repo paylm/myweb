@@ -26,6 +26,7 @@ type UserInfo struct {
 
 type UserData struct {
 	Id       int    `gorm:"primary_key" sql:"auto_increment;primary_key;unique" json:"id"`
+	Img      string `form:"img" json:"img"`
 	Username string `form:"username" json:"username"`
 	Password string `form:"password" json:"password"`
 	Email    string `form:"email" json:"email"`

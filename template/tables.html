@@ -4,10 +4,10 @@
   <body>
     <div class="page">
       <!-- Main Navbar-->
-      {{ template "nav_header"}}
+      {{ template "nav_header" .}}<!--最后面有个【点】，它的意思是要把当前页面的变量传递到nav_header.html中-->
       <div class="page-content d-flex align-items-stretch"> 
         <!-- Side Navbar -->
-        {{template "nav_side" }}
+        {{template "nav_side" .}}<!--最后面有个【点】，它的意思是要把当前页面的变量传递到nav_header.html中-->
         <div class="content-inner">
           <!-- Page Header-->
           <header class="page-header">
