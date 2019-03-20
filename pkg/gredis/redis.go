@@ -2,6 +2,7 @@ package gredis
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -114,4 +115,40 @@ func Exec(cmd string, data ...interface{}) (interface{}, error) {
 	conn := RedisConn.Get()
 	defer conn.Close()
 	return conn.Do(cmd, data...)
+}
+
+func SetNX(lock string, key string) bool {
+	ch := make(chan (bool))
+	conn := RedisConn.Get()
+	defer conn.Close()
+	defer close(ch)
+	go func() {
+		i := 10
+		for {
+			if i < 0 {
+				break
+			}
+			glock, err := redis.Bool(conn.Do("SETNX", lock, key))
+			if err != nil {
+				ch <- false
+				fmt.Printf("SetNX %s_%s  with err:%v\n", lock, key, err)
+				return
+			}
+			if glock {
+				conn.Do("EXPIRE", lock, 1)
+				ch <- true
+				return
+			}
+			time.Sleep(time.Duration(10) * time.Millisecond)
+			i++
+		}
+		ch <- false
+	}()
+	return <-ch
+}
+
+func ReleaseLock(lock string) {
+	conn := RedisConn.Get()
+	defer conn.Close()
+	conn.Do("DEL", lock)
 }
