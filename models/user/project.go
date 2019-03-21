@@ -50,9 +50,9 @@ func GetProjects() []Project {
 *
  */
 func BookPj() int {
-	lock := gredis.SetNX("book", "pj")
+	lock := gredis.SetNX("lock_book", "pj")
 	if !lock {
-		fmt.Printf("can't get lock to book project")
+		fmt.Printf("can't get lock to book project\n")
 		return 0
 	}
 	var b Book
@@ -62,7 +62,29 @@ func BookPj() int {
 		return 0
 	}
 	if b.Stat != 0 {
-		fmt.Printf("all the project is not stat:0")
+		fmt.Printf("all the project is not stat:0\n")
+		return 0
+	}
+	fmt.Printf("book:%v\n", b)
+	b.Stat = 1
+	gmysql.DB.Save(&b)
+	gredis.UnLock("book")
+	return b.Id
+}
+
+/**
+* 订顶目,不带锁返回项目单号
+* 高并发存在重复消费情况
+ */
+func BookUoLockPj() int {
+	var b Book
+	err := gmysql.DB.Where("stat = ?", "0").First(&b).Error
+	if err != nil {
+		fmt.Printf("get book with err:%v\n", err)
+		return 0
+	}
+	if b.Stat != 0 {
+		fmt.Printf("all the project is not stat:0\n")
 		return 0
 	}
 	fmt.Printf("book:%v\n", b)

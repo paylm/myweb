@@ -123,7 +123,7 @@ func SetNX(lock string, key string) bool {
 	defer conn.Close()
 	defer close(ch)
 	go func() {
-		i := 10
+		i := 3
 		for {
 			if i < 0 {
 				break
@@ -139,7 +139,7 @@ func SetNX(lock string, key string) bool {
 				ch <- true
 				return
 			}
-			time.Sleep(time.Duration(10) * time.Millisecond)
+			time.Sleep(time.Duration(1) * time.Millisecond)
 			i++
 		}
 		ch <- false
@@ -147,7 +147,7 @@ func SetNX(lock string, key string) bool {
 	return <-ch
 }
 
-func ReleaseLock(lock string) {
+func UnLock(lock string) {
 	conn := RedisConn.Get()
 	defer conn.Close()
 	conn.Do("DEL", lock)

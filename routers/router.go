@@ -138,6 +138,10 @@ func bookProject(c *gin.Context) {
 	c.String(http.StatusOK, fmt.Sprintf("book id %d\n", user.BookPj()))
 }
 
+func bookUnlockProject(c *gin.Context) {
+	c.String(http.StatusOK, fmt.Sprintf("book id %d\n", user.BookUoLockPj()))
+}
+
 func logout(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("userId")
@@ -208,6 +212,7 @@ func InitRouter() *gin.Engine {
 	r.GET("/charts", charts)
 	r.Any("/register", register)
 	r.GET("/bookpj", bookProject)
+	r.GET("/bookpj2", bookUnlockProject)
 	bl := r.Group("/blog")
 	{
 		bl.GET("/list", blist)
