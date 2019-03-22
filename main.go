@@ -14,12 +14,12 @@ func main() {
 	setting.Setup()
 	err := gredis.Setup()
 	if err != nil {
-		fmt.Printf("connect redis with err:%v", err)
+		fmt.Printf("connect redis with err:%v\n", err)
 		return
 	}
 	err = gmysql.Setup()
 	if err != nil {
-		fmt.Printf("connect mysql with err:%v", err)
+		fmt.Printf("connect mysql with err:%v\n", err)
 		return
 	}
 

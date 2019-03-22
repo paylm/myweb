@@ -38,7 +38,7 @@ func (Book) TableName() string {
 
 func GetProjects() []Project {
 	var articles []Project
-	err := gmysql.DB.Find(&articles).Error
+	err := gmysql.DB.Where("del=?", 0).Find(&articles).Error
 	if err != nil {
 		return nil
 	}
