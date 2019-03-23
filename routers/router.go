@@ -47,12 +47,14 @@ func getb(c *gin.Context) {
 func index(c *gin.Context) {
 	//c.String(200, `index`)
 	online := user.OnlineCount()
+	active := user.WeekActive()
 	pjs := user.GetProjects()
 	u := loadUserInfo(c)
-	fmt.Printf("userinfo:%v\n", u)
+	fmt.Printf("userinfo:%v\n,pjs:%v\n", u, pjs)
 	c.HTML(200, "index.html", gin.H{
 		"title":  "index",
 		"online": online,
+		"active": active,
 		"pjs":    pjs,
 		"user":   u,
 	})

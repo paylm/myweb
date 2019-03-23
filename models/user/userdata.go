@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/paylm/myweb/pkg/gmysql"
@@ -11,6 +12,7 @@ import (
 
 const (
 	ONLINE_KEY = "online"
+	ACTIVE_KEY = "active"
 )
 
 type User interface {
@@ -63,6 +65,7 @@ func (u *UserData) Verlogin() (UserData, error) {
 	}
 	//统计活跃
 	gredis.Exec("SETBIT", ONLINE_KEY, u2.Id, 1)
+	regActive(u2.Id)
 	return u2, nil
 }
 
@@ -93,6 +96,35 @@ func OnlineCount() int {
 		return 0
 	}
 
+	return count
+}
+
+/**
+*
+* 注册用户当天登录的
+**/
+func regActive(uid int) {
+	d := time.Now()
+	today := fmt.Sprintf("%d-%d-%d", d.Year(), d.Month(), d.Day())
+	gredis.Exec("SETBIT", fmt.Sprintf("%s-%s", ACTIVE_KEY, today), uid, 1)
+	fmt.Printf("active %d at %s", uid, today)
+}
+
+func WeekActive() int {
+	d := time.Now()
+	dstkey := fmt.Sprintf("%s-7", ACTIVE_KEY)
+	gredis.Exec("BITOP", "OR", dstkey, fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-1), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-2), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-3), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-4), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-5), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-6))
+
+	res, err := gredis.Exec("BITCOUNT", dstkey)
+	if err != nil {
+		fmt.Printf("Online count whith err:%v\n", err)
+		return 0
+	}
+
+	count, err1 := redis.Int(res, nil)
+	if err1 != nil {
+		return 0
+	}
 	return count
 }
 
