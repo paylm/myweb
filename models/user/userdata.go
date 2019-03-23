@@ -110,7 +110,7 @@ func regActive(uid int) {
 	fmt.Printf("active %d at %s", uid, today)
 }
 
-func WeekActive() int {
+func RecentActive() int {
 	d := time.Now()
 	dstkey := fmt.Sprintf("%s-7", ACTIVE_KEY)
 	gredis.Exec("BITOP", "OR", dstkey, fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-1), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-2), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-3), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-4), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-5), fmt.Sprintf("%s-%d-%d-%d", ACTIVE_KEY, d.Year(), d.Month(), d.Day()-6))

@@ -3,6 +3,7 @@ package routers
 import (
 	"encoding/gob"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -47,10 +48,11 @@ func getb(c *gin.Context) {
 func index(c *gin.Context) {
 	//c.String(200, `index`)
 	online := user.OnlineCount()
-	active := user.WeekActive()
+	active := user.RecentActive()
 	pjs := user.GetProjects()
 	u := loadUserInfo(c)
 	fmt.Printf("userinfo:%v\n,pjs:%v\n", u, pjs)
+	log.Printf("====== index  ======\n")
 	c.HTML(200, "index.html", gin.H{
 		"title":  "index",
 		"online": online,
@@ -136,6 +138,15 @@ func charts(c *gin.Context) {
 	})
 }
 
+func forms(c *gin.Context) {
+	u := loadUserInfo(c)
+	c.HTML(200, "forms.html", gin.H{
+		"title": "ppl forms",
+		"msg":   "",
+		"user":  u,
+	})
+}
+
 func bookProject(c *gin.Context) {
 	c.String(http.StatusOK, fmt.Sprintf("book id %d\n", user.BookPj()))
 }
@@ -161,6 +172,20 @@ func logout(c *gin.Context) {
 	//		"result": "logout ok",
 	//	})
 	c.Redirect(http.StatusFound, "/login")
+}
+
+func stats(c *gin.Context) {
+	aType := c.Param("type")
+	//fmt.Printf("stat param :%s\n", aType)
+	data := user.FindByType(aType)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"code":  http.StatusOK,
+			"error": "null",
+			"data":  data,
+		},
+	)
 }
 
 func blist(c *gin.Context) {
@@ -212,9 +237,11 @@ func InitRouter() *gin.Engine {
 	r.GET("/login", loginPage)
 	r.GET("/tables", tables)
 	r.GET("/charts", charts)
+	r.GET("/forms", forms)
 	r.Any("/register", register)
 	r.GET("/bookpj", bookProject)
 	r.GET("/bookpj2", bookUnlockProject)
+	r.GET("/stat/:type", stats)
 	bl := r.Group("/blog")
 	{
 		bl.GET("/list", blist)
