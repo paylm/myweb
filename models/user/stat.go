@@ -33,5 +33,6 @@ func FindByType(atype string) []Stat {
 
 func InsertStat(s Stat) error {
 	err := gmysql.DB.Create(&s).Error
+	gmysql.DB.Model(&s).Update("CreateTime", time.Now())
 	return err
 }

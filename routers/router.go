@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/paylm/myweb/models/user"
+	"github.com/paylm/myweb/pkg/middleware"
 	"github.com/paylm/myweb/pkg/setting"
 )
 
@@ -80,7 +81,7 @@ func login(c *gin.Context) {
 	fmt.Printf("%v login ok\n", u)
 	//set session
 	session := sessions.Default(c)
-	session.Set("userId", u.Id)
+	session.Set("userId", u.ID)
 	session.Set("user", u)
 	session.Save()
 	//c.String(http.StatusOK, "Login successful")
@@ -227,6 +228,7 @@ func InitRouter() *gin.Engine {
 	r.Use(sessions.Sessions("mysession", store))
 
 	r.Use(gin.Recovery())
+	r.Use(middleware.Logger()) //使用中间件
 	r.Static("/static", "./template")
 	r.LoadHTMLGlob("template/*.html")
 	gin.SetMode(setting.ServerSetting.RunMode)

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"time"
@@ -21,13 +22,20 @@ type User interface {
 	Logout()
 }
 
+// 基本模型的定义
+type Model struct {
+	ID        int `gorm:"primary_key;auto_increment" json:"id"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type UserInfo struct {
 	tel    string
 	openid string
 }
 
 type UserData struct {
-	Id       int    `gorm:"primary_key" sql:"auto_increment;primary_key;unique" json:"id"`
+	Model
 	Img      string `form:"img" json:"img"`
 	Username string `form:"username" json:"username"`
 	Password string `form:"password" json:"password"`
@@ -59,13 +67,14 @@ func (u *UserData) Verlogin() (UserData, error) {
 	}
 
 	strPwd := string(u2.Password)
-	if u.Password != strPwd {
+	uPwd := fmt.Sprintf("%x", md5.Sum([]byte(u.Password)))
+	if uPwd != strPwd {
 		fmt.Printf("pwd:%s,post pwd:%s\n", strPwd, u.Password)
 		return u2, errors.New("密码错误")
 	}
 	//统计活跃
-	gredis.Exec("SETBIT", ONLINE_KEY, u2.Id, 1)
-	regActive(u2.Id)
+	gredis.Exec("SETBIT", ONLINE_KEY, u2.ID, 1)
+	regActive(u2.ID)
 	return u2, nil
 }
 
@@ -74,12 +83,14 @@ func (u *UserData) Reg() error {
 	if u.Password == "" || u.Username == "" {
 		return errors.New("username or password can't be null")
 	}
-	err := gmysql.DB.Create(u).Error
+	u.Password = fmt.Sprintf("%x", md5.Sum([]byte(u.Password)))
+	err := gmysql.DB.Create(&u).Error
 	if err != nil {
 		return err
 	}
-	gredis.Set(u.Username, u.Password, 3600)
-	gredis.Exec("SETBIT", ONLINE_KEY, u.Id, 1)
+	gmysql.DB.Model(&u).Update("CreatedAt", time.Now())
+	//gredis.Set(u.Username, u.Password, 3600)
+	gredis.Exec("SETBIT", ONLINE_KEY, u.ID, 1)
 	fmt.Printf("reg save:%v\n", u)
 	return err
 }
@@ -107,6 +118,7 @@ func regActive(uid int) {
 	d := time.Now()
 	today := fmt.Sprintf("%d-%d-%d", d.Year(), d.Month(), d.Day())
 	gredis.Exec("SETBIT", fmt.Sprintf("%s-%s", ACTIVE_KEY, today), uid, 1)
+	gredis.Exec("EXPIRE", fmt.Sprintf("%s-%s", ACTIVE_KEY, today), 86400*8)
 	fmt.Printf("active %d at %s", uid, today)
 }
 
