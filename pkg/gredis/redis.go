@@ -117,38 +117,30 @@ func Exec(cmd string, data ...interface{}) (interface{}, error) {
 	return conn.Do(cmd, data...)
 }
 
-func SetNX(lock string, key string) bool {
+func SetNX(lock string, key string, px int) bool {
 	ch := make(chan (bool))
 	conn := RedisConn.Get()
 	defer conn.Close()
 	defer close(ch)
 	go func() {
-		i := 3
-		for {
-			if i < 0 {
-				break
-			}
-			glock, err := redis.Bool(conn.Do("SETNX", lock, key))
-			if err != nil {
-				ch <- false
-				fmt.Printf("SetNX %s_%s  with err:%v\n", lock, key, err)
-				return
-			}
-			if glock {
-				conn.Do("EXPIRE", lock, 1)
-				ch <- true
-				return
-			}
-			time.Sleep(time.Duration(1) * time.Millisecond)
-			i++
+		glock, err := redis.Bytes(conn.Do("SET", lock, key, "NX", "PX", px))
+		if err != nil {
+			ch <- false
+			fmt.Printf("SetNX %s_%s  with err:%v\n", lock, key, err)
+			return
+		}
+		if glock != nil {
+			ch <- true
+			return
 		}
 		ch <- false
 	}()
 	return <-ch
 }
 
-func UnLock(lock string) {
+func UnLock(lock string, key string) {
 	conn := RedisConn.Get()
 	defer conn.Close()
-	conn.Do("DEL", lock)
+	script := "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end"
+	conn.Do("EVAL", script, 1, lock, key)
 }

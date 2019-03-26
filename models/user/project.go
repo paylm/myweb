@@ -50,7 +50,7 @@ func GetProjects() []Project {
 *
  */
 func BookPj() int {
-	lock := gredis.SetNX("lock_book", "pj")
+	lock := gredis.SetNX("lock_book", "pj", 5000)
 	if !lock {
 		fmt.Printf("can't get lock to book project\n")
 		return 0
@@ -68,7 +68,7 @@ func BookPj() int {
 	fmt.Printf("book:%v\n", b)
 	b.Stat = 1
 	gmysql.DB.Save(&b)
-	gredis.UnLock("book")
+	gredis.UnLock("lock_book", "pj")
 	return b.Id
 }
 
