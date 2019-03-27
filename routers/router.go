@@ -189,6 +189,19 @@ func stats(c *gin.Context) {
 	)
 }
 
+func params(c *gin.Context) {
+	id := c.Query("id")
+	page := c.DefaultQuery("page", "0")
+	name := c.PostForm("name")
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":   id,
+		"page": page,
+		"name": name,
+	},
+	)
+}
+
 func blist(c *gin.Context) {
 	data := make(map[string]blog)
 	data["love"] = blog{title: "my love", content: "sssssssss"}
@@ -206,6 +219,19 @@ func bedit(c *gin.Context) {
 	})
 }
 
+func uploads(c *gin.Context) {
+	// Multipart form
+	form, _ := c.MultipartForm()
+	files := form.File["upload[]"]
+
+	for _, file := range files {
+		log.Println(file.Filename)
+
+		// Upload the file to specific dst.
+		c.SaveUploadedFile(file, fmt.Sprintf("./uploads/%s", file.Filename))
+	}
+	c.String(http.StatusOK, fmt.Sprintf("%d files uploaded!", len(files)))
+}
 func foo(c *gin.Context) {
 	c.JSON(200, "foo")
 }
@@ -244,6 +270,8 @@ func InitRouter() *gin.Engine {
 	r.GET("/bookpj", bookProject)
 	r.GET("/bookpj2", bookUnlockProject)
 	r.GET("/stat/:type", stats)
+	r.Any("/params", params)
+	r.POST("uploads", uploads)
 	bl := r.Group("/blog")
 	{
 		bl.GET("/list", blist)
