@@ -7,10 +7,10 @@ GOGET=$(GOCMD) get
 BINARY_NAME=myweb
 BINARY_UNIX=$(BINARY_NAME)_unix
 
-all: test build
-build:
+all: test build 
+build: deps
 	$(GOBUILD) -o $(BINARY_NAME) -v
-test:
+test: testdeps
 	export GIN_MODE=release
 	$(GOTEST) -v ./...
 clean:
@@ -21,6 +21,10 @@ run:
 	$(GOBUILD) -o $(BINARY_NAME) -v .
 	./$(BINARY_NAME)
 deps:
+	$(GOGET) github.com/gomodule/redigo/redis 
+	$(GOGET) github.com/go-sql-driver/mysql
+	$(GOGET) github.com/gin-gonic/contrib/sessions 
+testdeps:
 	$(GOGET) github.com/stretchr/testify/assert
 
 # Cross compilation
