@@ -11,6 +11,7 @@ all: test build
 build:
 	$(GOBUILD) -o $(BINARY_NAME) -v
 test:
+	export GIN_MODE=release
 	$(GOTEST) -v ./...
 clean:
 	$(GOCLEAN)
@@ -20,7 +21,7 @@ run:
 	$(GOBUILD) -o $(BINARY_NAME) -v .
 	./$(BINARY_NAME)
 deps:
-
+	$(GOGET) github.com/stretchr/testify/assert
 
 # Cross compilation
 build-linux:

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -236,9 +235,13 @@ func foo(c *gin.Context) {
 	c.JSON(200, "foo")
 }
 
-func InitRouter() *gin.Engine {
-	r := gin.New()
+func ping(c *gin.Context) {
+	c.String(http.StatusOK, "pong")
+}
 
+func InitRouter() *gin.Engine {
+	//gin.RunMode(setting.ServerSetting.RunMode)
+	r := gin.New()
 	//init session
 	//store := sessions.NewCookieStore([]byte("secret"))
 	//http://127.0.0.1:6060/pkg/github.com/gorilla/sessions/
@@ -246,10 +249,10 @@ func InitRouter() *gin.Engine {
 	gob.Register(&user.UserData{})
 	//gob.Register(&{})
 	store, _ := sessions.NewRedisStore(10, "tcp", setting.RedisSetting.Host, setting.RedisSetting.Password, []byte("secret"))
-	store.Options(sessions.Options{
-		MaxAge: int(30 * time.Minute), //30min
-		Path:   "/",
-	})
+	//store.Options(sessions.Options{
+	//	MaxAge: int(30 * time.Minute), //30min
+	//	Path:   "/",
+	//})
 
 	r.Use(sessions.Sessions("mysession", store))
 
@@ -260,6 +263,7 @@ func InitRouter() *gin.Engine {
 	gin.SetMode(setting.ServerSetting.RunMode)
 
 	r.GET("/", index)
+	r.GET("/ping", ping)
 	r.GET("/logout", logout)
 	r.POST("/login", login)
 	r.GET("/login", loginPage)
