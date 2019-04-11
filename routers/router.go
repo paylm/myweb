@@ -3,8 +3,10 @@ package routers
 import (
 	"encoding/gob"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -239,14 +241,22 @@ func ping(c *gin.Context) {
 	c.String(http.StatusOK, "pong")
 }
 
+func formatAsDate(t time.Time) string {
+	year, month, day := t.Date()
+	return fmt.Sprintf("%d-%d-%d", year, month, day)
+}
+
 func InitRouter() *gin.Engine {
-	//gin.RunMode(setting.ServerSetting.RunMode)
+	gin.SetMode(setting.ServerSetting.RunMode)
 	r := gin.New()
 	//init session
 	//store := sessions.NewCookieStore([]byte("secret"))
 	//http://127.0.0.1:6060/pkg/github.com/gorilla/sessions/
 	//As it's not possible to pass a raw type as a parameter to a function, gob.Register() relies on us passing it a value of the desired type
 	gob.Register(&user.UserData{})
+	r.SetFuncMap(template.FuncMap{
+		"formatAsDate": formatAsDate,
+	})
 	//gob.Register(&{})
 	store, _ := sessions.NewRedisStore(10, "tcp", setting.RedisSetting.Host, setting.RedisSetting.Password, []byte("secret"))
 	//store.Options(sessions.Options{
@@ -260,7 +270,6 @@ func InitRouter() *gin.Engine {
 	r.Use(middleware.Logger()) //使用中间件
 	r.Static("/static", "./template")
 	r.LoadHTMLGlob("template/*.html")
-	gin.SetMode(setting.ServerSetting.RunMode)
 
 	r.GET("/", index)
 	r.GET("/ping", ping)
