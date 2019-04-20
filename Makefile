@@ -19,7 +19,7 @@ clean:
 		rm -f $(BINARY_UNIX)
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v .
-	./$(BINARY_NAME)
+	#./$(BINARY_NAME)
 deps:
 	$(GOGET) github.com/gomodule/redigo/redis 
 	$(GOGET) github.com/go-sql-driver/mysql
@@ -32,3 +32,5 @@ build-linux:
 		CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
 docker-build:
 		docker run --rm -it -v "$(GOPATH)":/go -w /go/src/bitbucket.org/rsohlich/makepost golang:latest go build -o "$(BINARY_UNIX)" -v
+
+.PHONY: clean
