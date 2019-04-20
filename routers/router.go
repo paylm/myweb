@@ -233,6 +233,20 @@ func uploads(c *gin.Context) {
 	}
 	c.String(http.StatusOK, fmt.Sprintf("%d files uploaded!", len(files)))
 }
+
+func convert(c *gin.Context) {
+	form, _ := c.MultipartForm()
+	files := form.File["upload[]"]
+
+	for _, file := range files {
+		log.Println(file.Filename)
+
+		// Upload the file to specific dst.
+		c.SaveUploadedFile(file, fmt.Sprintf("./uploads/%s", file.Filename))
+	}
+	c.String(http.StatusOK, fmt.Sprintf("%d files uploaded!", len(files)))
+}
+
 func foo(c *gin.Context) {
 	c.JSON(200, "foo")
 }
